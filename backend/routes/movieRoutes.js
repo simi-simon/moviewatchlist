@@ -16,23 +16,37 @@ function validRating(rating) {
     return Number.isInteger(rating) && rating >= 1 && rating <= 10;
 }
 
-// ADD MOVIE
+// ── ADD MOVIE ────────────────────────────────────────────────
 router.post("/", async (req, res) => {
     try {
-        let { title, genre, releaseYear, runtime, platform, priority } = req.body;
+        let { title, genre, releaseYear, runtime, platform, priority, rating } = req.body;
 
         title = typeof title === "string" ? title.trim() : "";
+        const curYear = new Date().getFullYear();
 
-        if (!title || !genres.includes(genre) ||
+        if (
+            !title ||
+            !genres.includes(genre) ||
             !platforms.includes(platform) ||
             !Number.isInteger(releaseYear) ||
             releaseYear < 1950 ||
-            releaseYear > new Date().getFullYear() ||
-            !Number.isInteger(runtime) || runtime < 30 || runtime > 300 ||
-            !Number.isInteger(priority) || priority < 1 || priority > 5) {
-            return response(res, 400, false, "Invalid movie details");
+            releaseYear > curYear ||
+            !Number.isInteger(runtime) ||
+            runtime < 30 ||
+            runtime > 300 ||
+            !Number.isInteger(priority) ||
+            priority < 1 ||
+            priority > 5
+        ) {
+            return response(res, 400, false, "Invalid movie details. Please check all fields.");
         }
 
+        // New movies start with status "To Watch" - rating must NOT be set
+        if (rating !== undefined && rating !== null && rating !== "") {
+            return response(res, 400, false, "Rating cannot be set for a movie in To Watch status");
+        }
+
+        // Check duplicate title & release year (case-insensitive)
         const duplicate = await Movie.findOne({
             title: { $regex: "^" + title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", $options: "i" },
             releaseYear
@@ -51,24 +65,32 @@ router.post("/", async (req, res) => {
         const code = `MV-${releaseYear}-${String(counter.sequence).padStart(3, "0")}`;
 
         const movie = await Movie.create({
-            code, title, genre, releaseYear, runtime, platform, priority,
-            status: "To Watch"
+            code,
+            title,
+            genre,
+            releaseYear,
+            runtime,
+            platform,
+            priority,
+            status: "To Watch",
+            rating: null,
+            watchedDate: null
         });
 
         return response(res, 201, true, "Movie added successfully", movie);
     } catch (err) {
         if (err.code === 11000) {
-            return response(res, 409, false, "Duplicate movie code or movie already exists");
+            return response(res, 409, false, "Movie with this title and year already exists");
         }
         return response(res, 500, false, "Failed to add movie");
     }
 });
 
-// WATCH NEXT
+// ── WATCH NEXT ───────────────────────────────────────────────
 router.get("/watch-next", async (req, res) => {
     try {
         const movie = await Movie.findOne({ status: "To Watch" })
-            .sort({ priority: -1, runtime: 1 });
+            .sort({ priority: -1, runtime: 1, createdAt: -1 });
 
         if (!movie) {
             return response(res, 404, false, "No movies available to watch next");
@@ -80,7 +102,7 @@ router.get("/watch-next", async (req, res) => {
     }
 });
 
-// STATISTICS
+// ── STATISTICS ───────────────────────────────────────────────
 router.get("/stats", async (req, res) => {
     try {
         const grouped = await Movie.aggregate([
@@ -93,8 +115,10 @@ router.get("/stats", async (req, res) => {
             "Watched": 0
         };
 
-        grouped.forEach(item => {
-            statusCounts[item._id] = item.count;
+        grouped.forEach((item) => {
+            if (item._id && statusCounts[item._id] !== undefined) {
+                statusCounts[item._id] = item.count;
+            }
         });
 
         const watched = await Movie.aggregate([
@@ -120,7 +144,7 @@ router.get("/stats", async (req, res) => {
 
         return response(res, 200, true, "Statistics retrieved", {
             statusCounts,
-            totalHoursWatched: Math.round(totalMinutes / 60 * 10) / 10,
+            totalHoursWatched: Math.round((totalMinutes / 60) * 10) / 10,
             averageRating: Math.round(averageRating * 10) / 10,
             mostWatchedGenre: genresWatched[0]?._id || null
         });
@@ -129,7 +153,7 @@ router.get("/stats", async (req, res) => {
     }
 });
 
-// VIEW, SEARCH, FILTER AND PAGINATE
+// ── VIEW, SEARCH, FILTER AND PAGINATE ────────────────────────
 router.get("/", async (req, res) => {
     try {
         const page = Number(req.query.page) || 1;
@@ -156,20 +180,52 @@ router.get("/", async (req, res) => {
         }
 
         if (req.query.search) {
-            filter.title = { $regex: req.query.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" };
+            filter.title = {
+                $regex: req.query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+                $options: "i"
+            };
         }
 
         const total = await Movie.countDocuments(filter);
 
-        const movies = await Movie.find(filter)
-            .sort({ status: 1, priority: -1, runtime: 1, createdAt: -1 })
-            .skip((page - 1) * limit)
-            .limit(limit);
+        // Sorting: Movies in "To Watch" status must be sorted by Priority (high to low) first.
+        // We use an aggregation pipeline with status ordering:
+        // 1: To Watch (sorted by priority DESC, then runtime ASC)
+        // 2: Watching (sorted by priority DESC)
+        // 3: Watched (sorted by watchedDate DESC or createdAt DESC)
+        const movies = await Movie.aggregate([
+            { $match: filter },
+            {
+                $addFields: {
+                    statusWeight: {
+                        $switch: {
+                            branches: [
+                                { case: { $eq: ["$status", "To Watch"] }, then: 1 },
+                                { case: { $eq: ["$status", "Watching"] }, then: 2 },
+                                { case: { $eq: ["$status", "Watched"] }, then: 3 }
+                            ],
+                            default: 4
+                        }
+                    }
+                }
+            },
+            {
+                $sort: {
+                    statusWeight: 1,
+                    priority: -1,
+                    runtime: 1,
+                    createdAt: -1
+                }
+            },
+            { $skip: (page - 1) * limit },
+            { $limit: limit },
+            { $project: { statusWeight: 0 } }
+        ]);
 
         return response(res, 200, true, "Movies retrieved", {
             movies,
             currentPage: page,
-            totalPages: Math.ceil(total / limit),
+            totalPages: Math.ceil(total / limit) || 1,
             totalMovies: total
         });
     } catch (err) {
@@ -177,7 +233,7 @@ router.get("/", async (req, res) => {
     }
 });
 
-// GET ONE MOVIE
+// ── GET ONE MOVIE ────────────────────────────────────────────
 router.get("/:id", async (req, res) => {
     try {
         if (!/^[0-9a-fA-F]{24}$/.test(req.params.id)) {
@@ -196,7 +252,9 @@ router.get("/:id", async (req, res) => {
     }
 });
 
-// EDIT MOVIE DETAILS
+// ── EDIT MOVIE DETAILS ───────────────────────────────────────
+// Title, Genre, Runtime, Platform, Priority can be edited. Code and ReleaseYear cannot.
+// Rating can be edited if movie is in "Watched" status.
 router.put("/:id", async (req, res) => {
     try {
         if (!/^[0-9a-fA-F]{24}$/.test(req.params.id)) {
@@ -209,10 +267,9 @@ router.put("/:id", async (req, res) => {
             return response(res, 404, false, "Movie not found");
         }
 
-        const { title, genre, runtime, platform, priority } = req.body;
+        const { title, genre, runtime, platform, priority, rating } = req.body;
 
-        if (title !== undefined &&
-            (typeof title !== "string" || !title.trim())) {
+        if (title !== undefined && (typeof title !== "string" || !title.trim())) {
             return response(res, 400, false, "Title is required");
         }
 
@@ -220,8 +277,7 @@ router.put("/:id", async (req, res) => {
             return response(res, 400, false, "Invalid genre");
         }
 
-        if (runtime !== undefined &&
-            (!Number.isInteger(runtime) || runtime < 30 || runtime > 300)) {
+        if (runtime !== undefined && (!Number.isInteger(runtime) || runtime < 30 || runtime > 300)) {
             return response(res, 400, false, "Runtime must be 30 to 300 minutes");
         }
 
@@ -229,9 +285,20 @@ router.put("/:id", async (req, res) => {
             return response(res, 400, false, "Invalid platform");
         }
 
-        if (priority !== undefined &&
-            (!Number.isInteger(priority) || priority < 1 || priority > 5)) {
+        if (priority !== undefined && (!Number.isInteger(priority) || priority < 1 || priority > 5)) {
             return response(res, 400, false, "Priority must be 1 to 5");
+        }
+
+        // Rating can only be edited for Watched movies
+        if (rating !== undefined && rating !== null && rating !== "") {
+            if (movie.status !== "Watched") {
+                return response(res, 400, false, "Rating can only be set or edited for Watched movies");
+            }
+            const numRating = Number(rating);
+            if (!validRating(numRating)) {
+                return response(res, 400, false, "Rating must be an integer between 1 and 10");
+            }
+            movie.rating = numRating;
         }
 
         if (title !== undefined) {
@@ -266,71 +333,115 @@ router.put("/:id", async (req, res) => {
     }
 });
 
-// CHANGE STATUS OR EDIT A WATCHED MOVIE'S RATING
-
-router.patch("/:id/status", async (req, res) => {
+// ── EDIT RATING (FOR WATCHED MOVIES) ─────────────────────────
+router.patch("/:id/rating", async (req, res) => {
     try {
-        const { status, rating } = req.body;
+        if (!/^[0-9a-fA-F]{24}$/.test(req.params.id)) {
+            return response(res, 400, false, "Invalid movie ID");
+        }
+
         const movie = await Movie.findById(req.params.id);
 
         if (!movie) {
-            return res.status(404).json({
-                success: false,
-                message: "Movie not found"
-            });
+            return response(res, 404, false, "Movie not found");
+        }
+
+        if (movie.status !== "Watched") {
+            return response(res, 400, false, "Rating can only be set or edited for Watched movies");
+        }
+
+        const { rating } = req.body;
+        const numRating = Number(rating);
+
+        if (!validRating(numRating)) {
+            return response(res, 400, false, "Rating must be an integer between 1 and 10");
+        }
+
+        movie.rating = numRating;
+        await movie.save();
+
+        return response(res, 200, true, "Rating updated successfully", movie);
+    } catch (err) {
+        return response(res, 500, false, "Failed to update rating");
+    }
+});
+
+// ── STATUS TRANSITION WORKFLOW ───────────────────────────────
+// Allowed transitions:
+// To Watch → Watching or Watched
+// Watching → Watched or To Watch
+// Watched is final and cannot be changed
+router.patch("/:id/status", async (req, res) => {
+    try {
+        if (!/^[0-9a-fA-F]{24}$/.test(req.params.id)) {
+            return response(res, 400, false, "Invalid movie ID");
+        }
+
+        const movie = await Movie.findById(req.params.id);
+
+        if (!movie) {
+            return response(res, 404, false, "Movie not found");
+        }
+
+        const { status, rating } = req.body;
+
+        // If movie is already Watched: status cannot be changed.
+        if (movie.status === "Watched") {
+            if (status && status !== "Watched") {
+                return response(res, 400, false, "Watched status is final and cannot be changed");
+            }
+            // If user passed rating to update rating:
+            if (rating !== undefined && rating !== null && rating !== "") {
+                const numRating = Number(rating);
+                if (!validRating(numRating)) {
+                    return response(res, 400, false, "Rating must be an integer between 1 and 10");
+                }
+                movie.rating = numRating;
+                await movie.save();
+                return response(res, 200, true, "Rating updated successfully", movie);
+            }
+            return response(res, 400, false, "Watched status is final and cannot be changed");
         }
 
         const allowed = {
             "To Watch": ["Watching", "Watched"],
-            "Watching": ["To Watch", "Watched"],
-            "Watched": []
+            "Watching": ["To Watch", "Watched"]
         };
 
-        if (!allowed[movie.status]?.includes(status)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid status transition"
-            });
+        if (!status || !allowed[movie.status]?.includes(status)) {
+            return response(res, 400, false, `Invalid status transition from "${movie.status}" to "${status}"`);
         }
 
         if (status === "Watched") {
             if (rating === undefined || rating === null || rating === "") {
-                return res.status(400).json({
-                    success: false,
-                    message: "Rating is required when marking a movie Watched"
-                });
+                return response(res, 400, false, "Rating from 1 to 10 is mandatory when marking a movie as Watched");
             }
 
-            if (!Number.isFinite(Number(rating)) ||
-                Number(rating) < 1 || Number(rating) > 10) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Rating must be between 1 and 10"
-                });
+            const numRating = Number(rating);
+            if (!validRating(numRating)) {
+                return response(res, 400, false, "Rating must be an integer between 1 and 10");
             }
 
-            movie.rating = Number(rating);
+            movie.rating = numRating;
             movie.watchedDate = new Date();
+        } else {
+            // Transitioning to "To Watch" or "Watching" - rating cannot be set
+            if (rating !== undefined && rating !== null && rating !== "") {
+                return response(res, 400, false, "Rating can only be set for movies in Watched status");
+            }
         }
 
         movie.status = status;
         await movie.save();
 
-        res.json({
-            success: true,
-            message: "Movie status updated",
-            data: movie
-        });
+        return response(res, 200, true, `Movie status updated to "${status}"`, movie);
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        return response(res, 500, false, error.message);
     }
 });
 
-
-// DELETE MOVIE
+// ── DELETE MOVIE ─────────────────────────────────────────────
+// Movies in "Watching" status cannot be deleted
 router.delete("/:id", async (req, res) => {
     try {
         if (!/^[0-9a-fA-F]{24}$/.test(req.params.id)) {
