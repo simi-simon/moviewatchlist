@@ -589,3 +589,209 @@ form button {
     width: 100%;
   }
 }
+
+/* ── Alert & Status Feedback Banners ────────────────────────── */
+
+.alert-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid var(--olive);
+  border-left: 5px solid var(--olive);
+  padding: 12px 18px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--olive-dark);
+}
+
+.btn-close {
+  min-height: auto;
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-close:hover {
+  background: transparent;
+  color: var(--olive-dark);
+}
+
+.form-msg {
+  margin: 16px 0 0;
+  padding: 10px 14px;
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.form-msg.success {
+  background: #eaf5ea;
+  color: #245e24;
+  border: 1px solid #b7dfb7;
+}
+
+.form-msg.error {
+  background: #faeaea;
+  color: #922b2b;
+  border: 1px solid #eab2b2;
+}
+
+/* ── Watch Next Button & Card Enhancements ──────────────────── */
+
+.btn-watch-next {
+  min-height: 42px;
+  padding: 10px 20px;
+  background: var(--olive);
+  color: #fffdf5;
+  border: 1px solid var(--olive);
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 180ms ease;
+  box-shadow: 0 2px 6px rgba(48, 55, 43, 0.12);
+}
+
+.btn-watch-next:hover:not(:disabled) {
+  background: var(--olive-dark);
+  border-color: var(--olive-dark);
+  transform: translateY(-1px);
+}
+
+.btn-watch-next:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.watch-next-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.watch-next-code {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--olive-dark);
+  background: var(--olive-light);
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+
+/* ── Card Header & Badges ───────────────────────────────────── */
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.movie-code-badge {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #596746;
+  background: #eef1e6;
+  padding: 3px 8px;
+  border-radius: 2px;
+  border: 1px solid #dde2d2;
+}
+
+/* ── Status Workflow Dropdown ───────────────────────────────── */
+
+.status-dropdown-wrap {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dropdown-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.status-dropdown {
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--olive-dark);
+  background: #fbfaf3;
+  border: 1px solid #c9cdbc;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.status-dropdown:focus {
+  border-color: var(--olive);
+}
+
+.status-final-wrap {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
+.status-final-note {
+  font-size: 11px;
+  font-weight: 600;
+  color: #3b743b;
+  background: #e9f5e9;
+  padding: 4px 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* ── Watched Details & Rating ───────────────────────────────── */
+
+.watched-info {
+  background: #fcfbf6;
+  border: 1px solid #e4e7db;
+  padding: 10px 12px;
+  margin: 12px 0;
+  border-radius: 2px;
+}
+
+.rating-tag {
+  margin: 0 0 6px !important;
+  font-size: 13px !important;
+  color: #7a5c00 !important;
+  font-weight: 600;
+}
+
+.rating-tag strong {
+  color: #554100;
+}
+
+.watched-date {
+  margin: 0 0 8px !important;
+  font-size: 11px !important;
+  color: var(--muted) !important;
+}
+
+.btn-sm {
+  min-height: 28px !important;
+  padding: 4px 10px !important;
+  font-size: 11px !important;
+}
+
+.edit-readonly {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0 0 4px;
+}
