@@ -1,0 +1,591 @@
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+
+:root {
+  font-family: 'DM Sans', sans-serif;
+  color: #30372b;
+  background: #f6f4e9;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+
+  --olive: #596746;
+  --olive-dark: #39452f;
+  --olive-light: #e6e9dc;
+  --ivory: #f6f4e9;
+  --paper: #fffdf5;
+  --muted: #777b6d;
+  --line: #dedfce;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--ivory);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 36px 44px 64px;
+}
+
+/* Header */
+
+header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 24px 0 32px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 36px;
+}
+
+header::before {
+  content: 'THE PERSONAL FILM JOURNAL';
+  font-size: 10px;
+  letter-spacing: 3px;
+  font-weight: 700;
+  color: var(--olive);
+  margin-bottom: 18px;
+}
+
+header h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.12;
+  font-weight: 500;
+  letter-spacing: -1.5px;
+  margin: 0;
+  color: var(--olive-dark);
+}
+
+header p {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 12px 0 0;
+  line-height: 1.7;
+}
+
+/* Section headings */
+
+h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 27px;
+  font-weight: 500;
+  letter-spacing: -0.4px;
+  color: var(--olive-dark);
+  margin: 0 0 22px;
+}
+
+section {
+  margin-bottom: 38px;
+}
+
+/* Add movie form */
+
+.panel {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 28px;
+  margin-bottom: 42px;
+}
+
+.panel h2 {
+  margin-bottom: 25px;
+}
+
+form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 21px 24px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #555d49;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 45px;
+  padding: 11px 13px;
+  color: #30372b;
+  background: #fbfaf3;
+  border: 1px solid #d8dacb;
+  border-radius: 2px;
+  outline: none;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--olive);
+  background: #fffef9;
+}
+
+input::placeholder {
+  color: #999b8e;
+}
+
+button {
+  min-height: 45px;
+  padding: 12px 22px;
+  background: var(--olive);
+  color: #fffdf5;
+  border: 1px solid var(--olive);
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+button:hover {
+  background: var(--olive-dark);
+  border-color: var(--olive-dark);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--olive);
+  outline-offset: 3px;
+}
+
+form button {
+  align-self: end;
+}
+
+/* Feedback messages */
+
+[role="status"] {
+  margin: 18px 0 0;
+  color: var(--olive-dark);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Movie collection */
+
+.movie-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.movie-card {
+  position: relative;
+  min-width: 0;
+  padding: 23px 21px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--olive);
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.movie-card:hover {
+  border-color: #b8c0a8;
+  transform: translateY(-2px);
+}
+
+.movie-card h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--olive-dark);
+  overflow-wrap: anywhere;
+  margin: 0 0 16px;
+}
+
+.movie-card p {
+  margin: 9px 0;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.movie-card strong {
+  color: #555d49;
+  font-weight: 600;
+}
+
+.app > section > p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* Responsive layout */
+
+@media (max-width: 800px) {
+  .app {
+    padding: 25px 24px 48px;
+  }
+
+  .movie-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .app {
+    padding: 20px 16px 36px;
+  }
+
+  header {
+    padding: 20px 0 26px;
+    margin-bottom: 28px;
+  }
+
+  .panel {
+    padding: 20px 16px;
+  }
+
+  form,
+  .movie-list {
+    grid-template-columns: 1fr;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+}
+
+/* ── Status badge ───────────────────────────────────────────── */
+
+.status-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+  margin-bottom: 10px;
+}
+
+.status-badge.to-watch {
+  background: #e8ecdf;
+  color: var(--olive-dark);
+}
+
+.status-badge.watching {
+  background: #fff3c4;
+  color: #7a5c00;
+}
+
+.status-badge.watched {
+  background: #d8f0d8;
+  color: #2a622a;
+}
+
+/* ── Movie card status border colour ────────────────────────── */
+
+.movie-card.status-watching {
+  border-top-color: #c49a00;
+}
+
+.movie-card.status-watched {
+  border-top-color: #3a8f3a;
+}
+
+/* ── Search + filter controls ───────────────────────────────── */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+  align-items: center;
+}
+
+.controls select {
+  width: auto;
+  min-width: 130px;
+  min-height: 40px;
+}
+
+.search-input {
+  flex: 1 1 200px;
+  min-height: 40px;
+}
+
+.btn-secondary {
+  min-height: 40px;
+  padding: 9px 18px;
+  background: transparent;
+  color: var(--olive);
+  border: 1px solid var(--olive);
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--olive-light);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.btn-clear {
+  padding: 9px 14px;
+}
+
+/* ── Empty state ────────────────────────────────────────────── */
+
+.empty-state {
+  margin-top: 28px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ── Pagination ─────────────────────────────────────────────── */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.page-info {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ── Card actions (edit / delete) ───────────────────────────── */
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.btn-ghost {
+  min-height: 36px;
+  padding: 7px 16px;
+  background: transparent;
+  color: var(--olive);
+  border: 1px solid var(--olive);
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.btn-ghost:hover {
+  background: var(--olive-light);
+}
+
+.btn-danger {
+  min-height: 36px;
+  padding: 7px 16px;
+  background: transparent;
+  color: #8b2e2e;
+  border: 1px solid #c97b7b;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #f8eded;
+}
+
+.btn-danger:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Status controls (existing buttons) */
+.status-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.status-controls button {
+  min-height: 36px;
+  padding: 7px 14px;
+  font-size: 12px;
+}
+
+/* ── Inline edit form ───────────────────────────────────────── */
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.edit-form label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #555d49;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.edit-form input,
+.edit-form select {
+  min-height: 36px;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+
+.edit-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--olive-dark);
+  margin: 0 0 4px;
+}
+
+.edit-error {
+  font-size: 12px;
+  color: #8b2e2e;
+  margin: 0;
+}
+
+/* ── Stats section ──────────────────────────────────────────── */
+
+.stats-section {
+  margin-bottom: 30px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stat-box {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--olive);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.stat-num {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--olive-dark);
+  line-height: 1;
+}
+
+.stat-genre {
+  font-size: 16px;
+}
+
+.stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* ── Watch Next section ─────────────────────────────────────── */
+
+.watch-next-section {
+  margin-bottom: 30px;
+}
+
+.watch-next-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.watch-next-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--olive);
+  padding: 18px 22px;
+}
+
+.watch-next-card h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--olive-dark);
+  margin: 0 0 12px;
+}
+
+.watch-next-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.section-note {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ── Responsive additions ───────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .controls select {
+    width: 100%;
+  }
+}

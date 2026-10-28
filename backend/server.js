@@ -2,6 +2,7 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const movieRoutes = require("./routes/movieRoutes");
 require("dotenv").config();
 
 const app = express();
@@ -16,16 +17,14 @@ app.get("/", (req, res) => {
     });
 });
 
+app.use("/api/movies", movieRoutes);
+
 const PORT = process.env.PORT || 5000;
 
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log("MongoDB connected successfully");
+app.listen(PORT, "127.0.0.1", () => {
+    console.log(`Server running on port ${PORT}`);
 
-        app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
-        });
-    })
-    .catch((err) => {
-        console.error("MongoDB connection failed:", err.message);
-    });
+    mongoose.connect(process.env.MONGO_URI)
+        .then(() => console.log("MongoDB connected successfully"))
+        .catch((err) => console.error("MongoDB error:", err.message));
+});
