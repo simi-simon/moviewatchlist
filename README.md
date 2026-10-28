@@ -8,10 +8,10 @@ A full-stack MERN application for managing your personal movie collection. Track
 
 | Layer    | Technology                          |
 |----------|-------------------------------------|
-| Frontend | React 18 + Vite                     |
+| Frontend | React 19 + Vite                     |
 | Backend  | Node.js + Express 5                 |
 | Database | MongoDB Atlas (via Mongoose)        |
-| Styling  | Vanilla CSS (olive-green & ivory theme) |
+| Styling  | Vanilla CSS (Space Cadet cinematic palette & Playfair Display typography) |
 
 ---
 
@@ -159,14 +159,15 @@ Example: `MV-2010-001`, `MV-2010-002`
 
 | Feature | Status |
 |---------|--------|
-| Add movies with validation | ✅ |
-| Auto-generated immutable movie codes | ✅ |
+| Add movies with validation (frontend & backend) | ✅ |
+| Auto-generated immutable movie codes (MV-YYYY-NNN) | ✅ |
 | Duplicate title + year rejection (case-insensitive, HTTP 409) | ✅ |
-| Status transitions (To Watch → Watching → Watched) | ✅ |
-| Rating required when marking Watched | ✅ |
+| Status transitions dropdown showing only valid next statuses | ✅ |
+| Rating mandatory when marking Watched (1–10) | ✅ |
 | Watched date auto-recorded | ✅ |
 | Watched status is final (cannot transition back) | ✅ |
-| Edit title / genre / runtime / platform / priority | ✅ |
+| Edit rating later for Watched movies (PATCH /:id/rating) | ✅ |
+| Edit title / genre / runtime / platform / priority / rating | ✅ |
 | Delete with confirmation (Watching movies protected) | ✅ |
 | Search by title (case-insensitive) | ✅ |
 | Filter by genre | ✅ |
@@ -174,11 +175,12 @@ Example: `MV-2010-001`, `MV-2010-002`
 | Combined search + genre + status filters | ✅ |
 | Pagination (6 per page, Previous/Next) | ✅ |
 | Page resets to 1 on filter change | ✅ |
-| Watch Next recommendation | ✅ |
-| Statistics (counts, hours watched, avg rating, top genre) | ✅ |
+| "What should I watch next?" recommendation button | ✅ |
+| Statistics Dashboard (counts, hours watched, avg rating, top genre) | ✅ |
+| Stats refresh automatically on add, edit, status change, delete | ✅ |
 | Sorting: To Watch by priority then shortest runtime | ✅ |
 | Empty-state messages | ✅ |
-| Responsive layout | ✅ |
+| Cinematic Space Cadet theme & responsive mobile layout | ✅ |
 
 ---
 
@@ -193,13 +195,13 @@ movie-watchlist/
 │   ├── routes/
 │   │   └── movieRoutes.js    # All API routes
 │   ├── server.js             # Express app entry point
-│   ├── .env                  # ⚠️ Not committed — contains secrets
+│   ├── .env                  # Included with active MongoDB Atlas credentials
 │   ├── .env.example          # Template for .env
 │   └── package.json
 └── frontend/
     ├── src/
     │   ├── App.jsx           # Main React component
-    │   ├── App.css           # Olive-green & ivory design system
+    │   ├── App.css           # Cinematic dark theme (Space Cadet, Cyan Azure, Pink Lavender)
     │   ├── index.css         # Minimal CSS reset
     │   └── main.jsx          # React entry point
     └── package.json
