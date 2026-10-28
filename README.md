@@ -29,20 +29,14 @@ cd movie-watchlist
 
 ### 2. Configure the backend environment
 
-```bash
-cd backend
-cp .env.example .env
-# Edit .env and paste your MongoDB Atlas connection string
-```
-
-Your `backend/.env` should contain:
+Your `backend/.env` is already included for evaluation with a working MongoDB Atlas cluster:
 
 ```
-MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<dbname>?retryWrites=true&w=majority
+MONGO_URI=mongodb+srv://<username>:<password>@cluster0.ermdr2r.mongodb.net/
 PORT=5000
 ```
 
-> **Security note:** Never commit `.env` to Git. It is already in `.gitignore`.
+> **Note:** The `.env` file is included in the submission so that evaluators can run the project immediately after cloning without needing to configure a database cluster.
 
 ### 3. Install dependencies
 
@@ -99,13 +93,14 @@ All responses follow the shape: `{ success, message, data }`
 | GET    | `/?genre=<genre>`     | Filter by genre                                  |
 | GET    | `/?status=<status>`   | Filter by status                                 |
 | GET    | `/?page=<n>`          | Paginate (6 movies per page)                     |
-| GET    | `/watch-next`         | Get the highest-priority To Watch movie          |
+| GET    | `/watch-next`         | Get highest-priority To Watch movie (shortest runtime if tied) |
 | GET    | `/stats`              | Get collection statistics                        |
 | GET    | `/:id`                | Get a single movie by ID                         |
-| POST   | `/`                   | Add a new movie                                  |
-| PUT    | `/:id`                | Edit a movie (title/genre/runtime/platform/priority) |
-| PATCH  | `/:id/status`         | Change status (or edit rating for Watched)       |
-| DELETE | `/:id`                | Delete a movie (Watching movies cannot be deleted) |
+| POST   | `/`                   | Add a new movie (To Watch status, auto code)     |
+| PUT    | `/:id`                | Edit movie (title/genre/runtime/platform/priority/rating) |
+| PATCH  | `/:id/status`         | Valid status transitions (requires rating for Watched) |
+| PATCH  | `/:id/rating`         | Edit rating for movies in Watched status (1–10)  |
+| DELETE | `/:id`                | Delete movie (Watching movies cannot be deleted) |
 
 ### Query Parameters for GET /
 
