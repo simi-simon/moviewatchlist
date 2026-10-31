@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
-const API = "http://127.0.0.1:5000/api/movies";
+const rawApiUrl = import.meta.env.VITE_API_URL;
+let resolvedApiUrl = "";
+if (rawApiUrl) {
+  resolvedApiUrl = rawApiUrl.startsWith("http") ? rawApiUrl : `https://${rawApiUrl}`;
+}
+const API = resolvedApiUrl
+  ? (resolvedApiUrl.endsWith("/api/movies")
+      ? resolvedApiUrl
+      : `${resolvedApiUrl.replace(/\/$/, "")}/api/movies`)
+  : (import.meta.env.PROD ? "/api/movies" : "http://127.0.0.1:5000/api/movies");
 
 const GENRES = ["Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Romance", "Thriller"];
 const PLATFORMS = ["Netflix", "Prime Video", "Hotstar", "Theatre", "Other"];

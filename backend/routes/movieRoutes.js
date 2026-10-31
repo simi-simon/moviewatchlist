@@ -179,11 +179,14 @@ router.get("/", async (req, res) => {
             filter.genre = req.query.genre;
         }
 
-        if (req.query.search) {
-            filter.title = {
-                $regex: req.query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-                $options: "i"
-            };
+        if (req.query.search && typeof req.query.search === "string") {
+            const cleanSearch = req.query.search.trim().slice(0, 100);
+            if (cleanSearch) {
+                filter.title = {
+                    $regex: cleanSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+                    $options: "i"
+                };
+            }
         }
 
         const total = await Movie.countDocuments(filter);
@@ -436,7 +439,7 @@ router.patch("/:id/status", async (req, res) => {
 
         return response(res, 200, true, `Movie status updated to "${status}"`, movie);
     } catch (error) {
-        return response(res, 500, false, error.message);
+        return response(res, 500, false, "Failed to update movie status");
     }
 });
 

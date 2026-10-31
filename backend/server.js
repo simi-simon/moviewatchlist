@@ -3,13 +3,27 @@ const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const mongoose = require("mongoose");
+const path = require("path");
+const fs = require("fs");
 const movieRoutes = require("./routes/movieRoutes");
 require("dotenv").config();
 
 const app = express();
 
-// Security HTTP headers
-app.use(helmet());
+// Security HTTP headers with CSP configured to allow Google Fonts and client styles
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'", "https:", "http:"],
+        }
+    },
+    crossOriginEmbedderPolicy: false
+}));
 
 // Rate Limiting to prevent brute-force / DoS attacks
 const limiter = rateLimit({
@@ -24,23 +38,36 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Specific CORS configuration
+// Specific CORS configuration with support for multiple origins & Render URLs
+const rawClientUrl = process.env.CLIENT_URL || "";
+const clientOrigins = rawClientUrl
+    .split(",")
+    .map(url => url.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+
 const allowedOrigins = [
-    process.env.CLIENT_URL,
+    ...clientOrigins,
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
     "http://127.0.0.1:3000"
-].filter(Boolean);
+];
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
-        if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
-            callback(null, true);
-        } else {
-            callback(new Error("CORS policy violation: origin not allowed"));
+        // Allow requests with no origin (e.g. mobile apps, curl, server-to-server) or in non-production
+        if (!origin || process.env.NODE_ENV !== "production") {
+            return callback(null, true);
         }
+        const normalizedOrigin = origin.replace(/\/$/, "");
+        if (
+            allowedOrigins.includes("*") ||
+            allowedOrigins.includes(normalizedOrigin) ||
+            normalizedOrigin.endsWith(".onrender.com")
+        ) {
+            return callback(null, true);
+        }
+        callback(new Error(`CORS policy violation: origin ${origin} not allowed`));
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -50,13 +77,11 @@ app.use(cors({
 // Body parser with strict size limit to prevent Denial of Service via large payloads
 app.use(express.json({ limit: "20kb" }));
 
-// Root health check endpoint
-app.get("/", (req, res) => {
-    res.json({
-        success: true,
-        message: "Movie Watchlist API is running"
-    });
-});
+// If frontend build exists, serve static assets (supports monolithic single-service hosting on Render)
+const frontendDist = path.join(__dirname, "../frontend/dist");
+if (fs.existsSync(frontendDist)) {
+    app.use(express.static(frontendDist));
+}
 
 // Detailed system and DB health check
 app.get("/api/health", (req, res) => {
@@ -92,7 +117,22 @@ app.use("/api/movies", (req, res, next) => {
 // Mount movie routes
 app.use("/api/movies", movieRoutes);
 
-// Centralized 404 handler
+// If frontend build exists, serve index.html for non-API client routes (SPA routing)
+if (fs.existsSync(frontendDist)) {
+    app.get(/^(?!\/api).*/, (req, res) => {
+        res.sendFile(path.join(frontendDist, "index.html"));
+    });
+} else {
+    // Root health check endpoint for standalone API
+    app.get("/", (req, res) => {
+        res.json({
+            success: true,
+            message: "Movie Watchlist API is running"
+        });
+    });
+}
+
+// Centralized 404 handler for unmatched routes
 app.use((req, res) => {
     res.status(404).json({
         success: false,
@@ -110,7 +150,7 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-const HOST = process.env.HOST || "0.0.0.0";
+const HOST = process.env.NODE_ENV === "production" ? "0.0.0.0" : (process.env.HOST || "0.0.0.0");
 
 // Resilient MongoDB connection with auto-retry
 let retryTimeout = null;
